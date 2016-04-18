@@ -29,9 +29,7 @@ soft open fences ,
 separator symbol =; ,
 }
 
-\title{\LARGE \bf
-Sensor batch processing Spark Reference Architectures
-}
+\title{Spark Reference Architecture \\ Sensor batch processing}
 
 \author{Jan Machacek$^{1}$% <-this % stops a space
 %\thanks{Supported by Cake Solutions Limited}% <-this % stops a space
@@ -76,7 +74,16 @@ The application on the user's smartphone connects data from the available sensor
 
 The sensors shown here as consumer-grade wearables perform only the basic hardware interaction: there is no pre-processing of the recorded data. The system accepts accelerometer, gyroscope, heart rate and---where available---data from strain gauges in smart clothes. The sensors send the data in 1s batches; the application on the mobile resamples the sampling rate to 50 Hz. (Accelerometer and gyroscope typically sample at this rate, heart rate and the strain gauges in smart clothes can be up-sampled to 50 Hz easily.) 
 
-The sensor data in the mobile application is a set of vectors containing 1 second of input data of \texttt{float} values, normalised to a range of $\interval[open]{-1}{1}$ by using a maximum reasonable value for acceleration, rotation, strain and heart rate. (One might consider $4 ms^{-2}$ to be such reasonable acceleration.)
+The sensor data in the mobile application is a set of vectors containing 1 second of input data of \texttt{float} values, normalised to a range of $\interval[open]{-1}{1}$ by using a maximum reasonable value for acceleration, rotation, strain and heart rate. (Looking at figure \ref{raw-acceleration}, one might consider $4 ms^{-2}$ to be such reasonable acceleration.)
+
+\begin{figure}[hb]
+	\begin{center}
+		\includegraphics[scale=0.2]{ri-raw-acceleration.png}
+		\caption{Raw acceleration data}
+		\label{raw-acceleration}
+	\end{center}
+\end{figure}
+
 
 It is important to realise that a single sensor input alone is not sufficient to accurately distinguish exercise from non-exercise. 
 
