@@ -157,3 +157,7 @@ pythontex-files-*/
 
 # Latexian
 TSWLatexianTemp*
+
+# The generated PDFs
+*.pdf
+
