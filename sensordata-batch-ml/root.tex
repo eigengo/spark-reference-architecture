@@ -62,7 +62,7 @@ This architecture was used in a connected fitness application. The application p
 
 The application on the user's smartphone connects data from the available sensors, combines it with a statistical model of the user's behaviour, and---where available---fine-grained location services. These three inputs allow the application to make the first distinction: exercise vs. no-exercise. From the user's perspective, the system is an automated fitness trainer; from a data scientist's perspective, the biometric data the system collects allows for detailed analysis of exercises, exercise regimes, impact of exercise on the users' well-being, automated physiotherapy, and many other applications.
 
-\subsection{Architecture}
+\subsection{Main components}
 
 \begin{figure}[hb]
 	\begin{center}
@@ -72,11 +72,42 @@ The application on the user's smartphone connects data from the available sensor
 	\end{center}
 \end{figure}
 
-The sensors shown here as consumer-grade wearables perform only the basic hardware interaction: there is no pre-processing of the recorded data. The system accepts accelerometer, gyroscope, heart rate and---where available---data from strain gauges in smart clothes. The sensors send the data in 1s batches; the application on the mobile resamples the sampling rate to 50 Hz. (Accelerometer and gyroscope typically sample at this rate, heart rate and the strain gauges in smart clothes can be up-sampled to 50 Hz easily.) 
+The sensors shown here as consumer-grade wearables perform only the basic hardware interaction: there is no pre-processing of the recorded data. The system accepts accelerometer, gyroscope, heart rate and---where available---data from strain gauges in smart clothes. The mobile application performs the real-time processing of the inputs, displays the next exercise the user should perform (allowing the user to change the suggestion by simply walking to a station for a different exercise, or by beginning a different exercise). The mobile application also prompts the user to confirm correct labels for the recorded data. \emph{This is the key component in the entire system: the frictionless user experience gives the system very accurate labels on very clean data}.
 
-The sensor data in the mobile application is a set of vectors containing 1 second of input data of \texttt{float} values, normalised to a range of $\interval[open]{-1}{1}$ by using a maximum reasonable value for acceleration, rotation, strain and heart rate. (Looking at figure \ref{raw-acceleration}, one might consider $4 ms^{-2}$ to be such reasonable acceleration.)
+The mobile submits the entire session data (the sensor data, matching labels and latest user behaviour models) in a single request to the Akka \cite{akka} cluster---a CQRS/ES \cite{cqrs-es} microservice implementation. The Akka cluster stores its events and snapshots in a journal, implemented by the Apache Cassandra \cite{apache-cassandra} database. Alongside the events and snapshots, which are opaque to non-Akka systems, the \texttt{exercise} microservice saves the sensor data and the matching labels in a properly formed tabular structure. This structure allows the Apache Spark \cite{apache-spark} cluster to be used for typical big data tasks.
 
-\begin{figure}[hb]
+The Spark cluster Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec magna purus, gravida et molestie a, bibendum et libero. Maecenas sed egestas erat. Suspendisse ullamcorper posuere erat, et finibus turpis tempor varius. Aenean tempus tellus sit amet arcu interdum, eu ornare nulla egestas. Nulla facilisi. Sed imperdiet urna et convallis consequat. Nullam nec ex eu leo auctor interdum eu id nunc. Fusce fermentum tempor gravida. Morbi sit amet augue a erat condimentum vulputate. Proin sed mattis lorem, viverra condimentum metus. Suspendisse luctus aliquam placerat. Donec sit amet mollis massa. Aliquam luctus dui in imperdiet accumsan. Nam nisi ligula, dapibus id interdum in, dictum efficitur ligula. Donec bibendum mollis convallis. Fusce maximus non orci quis laoreet.
+
+The models are implemented in Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec magna purus, gravida et molestie a, bibendum et libero. Maecenas sed egestas erat. Suspendisse ullamcorper posuere erat, et finibus turpis tempor varius. Aenean tempus tellus sit amet arcu interdum, eu ornare nulla egestas. Nulla facilisi. Sed imperdiet urna et convallis consequat. Nullam nec ex eu leo auctor interdum eu id nunc. Fusce fermentum tempor gravida. Morbi sit amet augue a erat condimentum vulputate. Proin sed mattis lorem, viverra condimentum metus. Suspendisse luctus aliquam placerat. Donec sit amet mollis massa. Aliquam luctus dui in imperdiet accumsan. Nam nisi ligula, dapibus id interdum in, dictum efficitur ligula. Donec bibendum mollis convallis. Fusce maximus non orci quis laoreet.
+
+\subsection{Mobile application}
+
+The sensors send the data in 1s batches; the application on the mobile resamples the sampling rate to 50 Hz. (Accelerometer and gyroscope typically sample at this rate, heart rate and the strain gauges in smart clothes can be up-sampled to 50 Hz easily.) The mobile application ingests the data from the sensors and, together with a statistical model of the user's short-term behaviour, attempts to identify the movement. The models in the mobile application can make successful predictions of sequence of exercises in a session and the properties of each exercise (i.e. weight, number of repetitions, duration, intensity). The model used to predict sequence of exercise sessions and exercises within a session is a Markov chain \cite{markov-chain-exercise}. This approach allows the application to deal with the reality of exercise in a public gym, where the station for the next suggested exercise might not be available. The Markov chain, together with a bio-mechanical model of the main muscle groups, gives the users the flexibility to achieve their workout targets even in crowded gyms. The sequence of exercise predictions for one particular exercise sessions are illustrated on Fig. \ref{model-sequence}.
+
+\begin{figure}[h]
+	\begin{center}
+		\includegraphics[scale=0.2]{ri-model-sequence.png}
+		\caption{Exercise sequence model}
+		\label{model-sequence}
+	\end{center}
+\end{figure}
+
+The application displays this sequence in a user interface that is suited to be displayed on a mobile that is typically placed on the floor, several meters away from the user during his or her exercise session. (Viz  Fig. \ref{ui-sequence}.)
+
+\begin{figure}[h]
+	\begin{center}
+		\includegraphics[scale=0.1]{ri-ui-sequence.jpg}
+		\caption{Exercise sequence UI}
+		\label{ui-sequence}
+	\end{center}
+\end{figure}
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec magna purus, gravida et molestie a, bibendum et libero. Maecenas sed egestas erat. Suspendisse ullamcorper posuere erat, et finibus turpis tempor varius. Aenean tempus tellus sit amet arcu interdum, eu ornare nulla egestas. Nulla facilisi. Sed imperdiet urna et convallis consequat. Nullam nec ex eu leo auctor interdum eu id nunc. Fusce fermentum tempor gravida. Morbi sit amet augue a erat condimentum vulputate. Proin sed mattis lorem, viverra condimentum metus. Suspendisse luctus aliquam placerat. Donec sit amet mollis massa. Aliquam luctus dui in imperdiet accumsan. Nam nisi ligula, dapibus id interdum in, dictum efficitur ligula. Donec bibendum mollis convallis. Fusce maximus non orci quis laoreet.
+
+
+The sensor data in the mobile application is a set of vectors containing 1 second of input data of \texttt{float} values, normalised to a range of $\interval[open]{-1}{1}$ by using a maximum reasonable value for acceleration, rotation, strain and heart rate. (Looking at figure \ref{raw-acceleration}, one might consider $4ms^{-2}$ to be such reasonable acceleration.)
+
+\begin{figure}[h]
 	\begin{center}
 		\includegraphics[scale=0.2]{ri-raw-acceleration.png}
 		\caption{Raw acceleration data}
@@ -116,7 +147,11 @@ TODO
 
 \begin{thebibliography}{99}
 
-\bibitem{c1} G. O. Young, ÒSynthetic structure of industrial plastics (Book style with paper title and editor),Ó 	in Plastics, 2nd ed. vol. 3, J. Peters, Ed.  New York: McGraw-Hill, 1964, pp. 15Ð64.
+\bibitem{markov-chain-exercise} F. Oo, Q. Uux. Bar. 2016.
+\bibitem{akka} Akka.
+\bibitem{cqrs-es} CQRS/ES.
+\bibitem{apache-cassandra} Apache Cassandra.
+\bibitem{apache-spark} Apache Spark.
 
 \end{thebibliography}
 
