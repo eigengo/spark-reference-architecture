@@ -86,30 +86,41 @@ The sensors send the data in 1s batches; the application on the mobile resamples
 
 \begin{figure}[h]
 	\begin{center}
-		\includegraphics[scale=0.2]{ri-model-sequence.png}
+		\includegraphics[width=7cm,keepaspectratio]{ri-model-sequence.png}
 		\caption{Exercise sequence model}
 		\label{model-sequence}
 	\end{center}
 \end{figure}
 
-The application displays this sequence in a user interface that is suited to be displayed on a mobile that is typically placed on the floor, several meters away from the user during his or her exercise session. (Viz  Fig. \ref{ui-sequence}.)
+The numbers in \ref{model-sequence} represent the count of transitions taken; hence it is possible to calculate the probability of transition from any given state. The state names represent the exercise labels, in real application, they are the real exercise names. The mobile application can either receive the chain when the user selects one of the pre-defined exercise programmes, or it can construct the chain from empty if the user choses to start his or her custom workout. This gives the application an intuitive feel; its suggestions are what the users usually do. Finally, the information in the chain allows the system to identify the most popular sequences of exercises, to identify exercises that the users do not like; more interestingly, the system can use the information in the chain to identify sequence of exercises that leads to the best improvement. (At this point, we do not define what the improvement is: in some applications, it may be weight loss; in other applications, it may be greatest mobility range improvement; and many others.)
+
+To make the next-exercise prediction more accurate, the mobile application uses fined-grained location services. The location services are implemented using bluetooth beacons. The beacons operate in the iBeacon mode \cite{ibeacon}; each beacon in this mode transmits its identifier, a major, and minor values. The mobile application sets up continuous scanning of a major value which identifies exercise equipment, receiving notifications of beacons and their minor values as they come into range. The mobile application then filters the exercise states keeping only those that are associated with a particular area. (Viz Fig. \ref{model-sequence+location}.)
 
 \begin{figure}[h]
 	\begin{center}
-		\includegraphics[scale=0.1]{ri-ui-sequence.jpg}
-		\caption{Exercise sequence UI}
-		\label{ui-sequence}
+		\includegraphics[width=7cm,keepaspectratio]{ri-model-sequence+location.png}
+		\caption{Exercise sequence model}
+		\label{model-sequence+location}
 	\end{center}
 \end{figure}
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec magna purus, gravida et molestie a, bibendum et libero. Maecenas sed egestas erat. Suspendisse ullamcorper posuere erat, et finibus turpis tempor varius. Aenean tempus tellus sit amet arcu interdum, eu ornare nulla egestas. Nulla facilisi. Sed imperdiet urna et convallis consequat. Nullam nec ex eu leo auctor interdum eu id nunc. Fusce fermentum tempor gravida. Morbi sit amet augue a erat condimentum vulputate. Proin sed mattis lorem, viverra condimentum metus. Suspendisse luctus aliquam placerat. Donec sit amet mollis massa. Aliquam luctus dui in imperdiet accumsan. Nam nisi ligula, dapibus id interdum in, dictum efficitur ligula. Donec bibendum mollis convallis. Fusce maximus non orci quis laoreet.
+With the fine-grained location data available, the application is \emph{expecting} to see a movement that precedes exercises A or C. We call this movement the \emph{setup movement}. The setup movement classifier takes 1s of sensor input and produces probabilities classes that represent groups of exercises; this is particularly important for users that do not have a large number of sensors. If the user only wears an accelerometer on his or her wrist, then the setup movement for barbell bench press is the same as the setup movement for dumbbell bench press. In 94 \% of our test user base of 451, the next exercise prediction refined by the fine-grained location eliminated ambiguity of setup movement detection.
 
+\begin{figure}[hb]
+	\begin{center}
+		\includegraphics[width=7cm,keepaspectratio]{ri-model-sequence+setup.png}
+		\caption{Exercise sequence model}
+		\label{model-sequence+setup}
+	\end{center}
+\end{figure}
+
+\subsection{Sensor data}
 
 The sensor data in the mobile application is a set of vectors containing 1 second of input data of \texttt{float} values, normalised to a range of $\interval[open]{-1}{1}$ by using a maximum reasonable value for acceleration, rotation, strain and heart rate. (Looking at figure \ref{raw-acceleration}, one might consider $4ms^{-2}$ to be such reasonable acceleration.)
 
-\begin{figure}[h]
+\begin{figure}[hp]
 	\begin{center}
-		\includegraphics[scale=0.2]{ri-raw-acceleration.png}
+		\includegraphics[width=7cm,keepaspectratio]{ri-raw-acceleration.png}
 		\caption{Raw acceleration data}
 		\label{raw-acceleration}
 	\end{center}
@@ -152,6 +163,7 @@ TODO
 \bibitem{cqrs-es} CQRS/ES.
 \bibitem{apache-cassandra} Apache Cassandra.
 \bibitem{apache-spark} Apache Spark.
+\bibitem{ibeacon} iBeacon.
 
 \end{thebibliography}
 
