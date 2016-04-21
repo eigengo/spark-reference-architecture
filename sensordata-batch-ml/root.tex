@@ -25,7 +25,9 @@
 \usepackage{interval}
 \usepackage{listings}
 \usepackage{hyperref}
+\usepackage{siunitx}
 
+\sisetup{load-configurations = abbreviations, binary-units = true}
 \intervalconfig {
 soft open fences ,
 separator symbol =; ,
@@ -84,7 +86,7 @@ The models are implemented in Lorem ipsum dolor sit amet, consectetur adipiscing
 
 \subsection{Mobile application}
 
-The sensors send the data in 1s batches; the application on the mobile resamples the sampling rate to 50 Hz. (Accelerometer and gyroscope typically sample at this rate, heart rate and the strain gauges in smart clothes can be up-sampled to 50 Hz easily.) The mobile application ingests the data from the sensors and, together with a statistical model of the user's short-term behaviour, attempts to identify the movement. The models in the mobile application can make successful predictions of sequence of exercises in a session and the properties of each exercise (i.e. weight, number of repetitions, duration, intensity). The model used to predict sequence of exercise sessions and exercises within a session is a Markov chain \cite{markov-chain-exercise}. This approach allows the application to deal with the reality of exercise in a public gym, where the station for the next suggested exercise might not be available. The Markov chain, together with a bio-mechanical model of the main muscle groups, gives the users the flexibility to achieve their workout targets even in crowded gyms. The sequence of exercise predictions for one particular exercise sessions are illustrated on \autoref{fig:model-sequence}.
+The sensors send the data in \SI{1}{\second} batches; the application on the mobile resamples the sampling rate to \SI{50}\hertz. (Accelerometer and gyroscope typically sample at this rate, heart rate and the strain gauges in smart clothes can be up-sampled to \SI{50}{\hertz} easily.) The mobile application ingests the data from the sensors and, together with a statistical model of the user's short-term behaviour, attempts to identify the movement. The models in the mobile application can make successful predictions of sequence of exercises in a session and the properties of each exercise (i.e. weight, number of repetitions, duration, intensity). The model used to predict sequence of exercise sessions and exercises within a session is a Markov chain \cite{markov-chain-exercise}. This approach allows the application to deal with the reality of exercise in a public gym, where the station for the next suggested exercise might not be available. The Markov chain, together with a bio-mechanical model of the main muscle groups, gives the users the flexibility to achieve their workout targets even in crowded gyms. The sequence of exercise predictions for one particular exercise sessions are illustrated on \autoref{fig:model-sequence}.
 
 \begin{figure}[h]
 	\begin{center}
@@ -106,7 +108,7 @@ To make the next-exercise prediction more accurate, the mobile application uses 
 	\end{center}
 \end{figure}
 
-With the fine-grained location data available, the application is \emph{expecting} to see a movement that precedes exercises A or C. We call this movement the \emph{setup movement}. The setup movement classifier takes 1s of sensor input and produces probabilities classes that represent groups of exercises; this is particularly important for users that do not have a large number of sensors. If the user only wears an accelerometer on his or her wrist, then the setup movement for barbell bench press is the same as the setup movement for dumbbell bench press. In 94 \% of our test user base of 451, the next exercise prediction refined by the fine-grained location eliminated ambiguity of setup movement detection in all their exercises. \autoref{fig:model-sequence+setup} shows the final decision state of the mobile application.
+With the fine-grained location data available, the application is \emph{expecting} to see a movement that precedes exercises A or C. We call this movement the \emph{setup movement}. The setup movement classifier takes \SI{1}\second of sensor input and produces probabilities classes that represent groups of exercises; this is particularly important for users that do not have a large number of sensors. If the user only wears an accelerometer on his or her wrist, then the setup movement for barbell bench press is the same as the setup movement for dumbbell bench press. In 94 \% of our test user base of 451, the next exercise prediction refined by the fine-grained location eliminated ambiguity of setup movement detection in all their exercises. \autoref{fig:model-sequence+setup} shows the final decision state of the mobile application.
 
 \begin{figure}[hb]
 	\begin{center}
@@ -118,7 +120,7 @@ With the fine-grained location data available, the application is \emph{expectin
 
 \subsection{Sensor data}
 
-The sensors send the data to the mobile application over BLE. The protocol as well as the hardware architecture of the devices places restrictions on the sample width and sampling rate. BLE protocol specifies maximum 80 bytes per message, and minimum duration of 7.5 ms between messages; this gives us theoretical maximum of 10640 bytes per second. With one particular hardware / firmware implementation, we found that the effective reliable data transfer rate drops to only 280 bytes per second. That particular device also lacked significant processing power. This gave us baseline protocol for 3-axis samples (such as acceleration or rotation), with 20 B for header and 5 B per sample. Packing the sample values into 40 bits gave us 3 $\times$ 13 bits and one bit for padding, and yielded code in \autoref{lst:threed-data}.
+The sensors send the data to the mobile application over BLE. The protocol as well as the hardware architecture of the devices places restrictions on the sample width and sampling rate. BLE protocol specifies maximum \SI{80}{\byte} per message, and minimum duration of \SI{7.5}{\milli\second} between messages; this gives us theoretical maximum of \SI{10640}{\byte\per\second}. With one particular hardware / firmware implementation, we found that the effective reliable data transfer rate drops to only \SI{280}{\byte\per\second}. That particular device also lacked significant processing power. This gave us baseline protocol for 3-axis samples (such as acceleration or rotation), with \SI{20}{\byte} for header and \SI{5}{\byte} per sample. Packing the sample values into \SI{40}{\bit} gave us $3 \times$\SI{13}{\bit} and \SI{1}{\bit} for padding, and yielded code in \autoref{lst:threed-data}.
 
 \begin{lstlisting}[language=C,caption={BLE 3-axis data},label={lst:threed-data}]
 #define PACKED __attribute__((__packed__))
@@ -140,9 +142,9 @@ struct PACKED header {
 };
 \end{lstlisting}
 
-The \lstinline{preamble} is a marker sequence, which also allows for detection of endian-ness; though all sensor data-collecting devices we have encountered so far are big endian. The payload consisting of \lstinline{header} followed by 50 samples of \lstinline{threed_data} results in 270 Bs$^{-1}$ over the BLE connection. 
+The \lstinline{preamble} is a marker sequence, which also allows for detection of endian-ness; though all sensor data-collecting devices we have encountered so far are big endian. The payload consisting of \lstinline{header} followed by 50 samples of \lstinline{threed_data} results in \SI{270}{\byte\per\second} over the BLE connection. 
 
-The sensor data in the mobile application is a set of vectors containing 1 second of sensor input data, normalised to a range of $\interval[open]{-1}{1}$ by using a maximum reasonable value for acceleration, rotation, strain and heart rate. (Looking at figure \autoref{raw-acceleration}, one might consider 4 ms$^{-2}$ to be such reasonable acceleration.) 
+The sensor data in the mobile application is a set of vectors containing 1 second of sensor input data, normalised to a range of $\interval[open]{-1}{1}$ by using a maximum reasonable value for acceleration, rotation, strain and heart rate. (Looking at figure \autoref{raw-acceleration}, one might consider \SI{4}{ms^{-2}} to be such reasonable acceleration.) 
 
 \begin{figure}[hp]
 	\begin{center}
