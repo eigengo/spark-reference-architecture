@@ -118,7 +118,7 @@ With the fine-grained location data available, the application is \emph{expectin
 
 \subsection{Sensor data}
 
-The sensors send the data to the mobile application over BLE. The protocol as well as the hardware architecture of the devices places restrictions on the sample width and sampling rate. BLE protocol specifies maximum 80 bytes per message, and minimum duration of 7.5 ms between messages; this gives us theoretical maximum of 10640 bytes per second. With one particular hardware / firmware implementation, we found that the effective reliable data transfer rate drops to only 280 bytes per second. That particular device also lacked significant processing power. This gave us baseline protocol for triple values (such as acceleration or rotation), with 20 B for header and 5 B per sample. Packing the sample values into 40 bits gave us 3 $\times$ 13 bits and one bit for padding, and yielded code in \autoref{lst:threed-data}.
+The sensors send the data to the mobile application over BLE. The protocol as well as the hardware architecture of the devices places restrictions on the sample width and sampling rate. BLE protocol specifies maximum 80 bytes per message, and minimum duration of 7.5 ms between messages; this gives us theoretical maximum of 10640 bytes per second. With one particular hardware / firmware implementation, we found that the effective reliable data transfer rate drops to only 280 bytes per second. That particular device also lacked significant processing power. This gave us baseline protocol for 3-axis samples (such as acceleration or rotation), with 20 B for header and 5 B per sample. Packing the sample values into 40 bits gave us 3 $\times$ 13 bits and one bit for padding, and yielded code in \autoref{lst:threed-data}.
 
 \begin{lstlisting}[language=C,caption={BLE 3-axis data},label={lst:threed-data}]
 #define PACKED __attribute__((__packed__))
@@ -140,9 +140,9 @@ struct PACKED header {
 };
 \end{lstlisting}
 
-The \texttt{preable} is a marker sequence, which also allows for detection of endian-ness; though all sensor data-collecting devices we have encountered so far are big endian. The payload consisting of \texttt{header} followed by 50 samples of \texttt{threed\_data} results in 270 $Bs^{-1}$ over the BLE connection. 
+The \lstinline{preamble} is a marker sequence, which also allows for detection of endian-ness; though all sensor data-collecting devices we have encountered so far are big endian. The payload consisting of \lstinline{header} followed by 50 samples of \lstinline{threed_data} results in 270 Bs$^{-1}$ over the BLE connection. 
 
-The sensor data in the mobile application is a set of vectors containing 1 second of sensor input data, normalised to a range of $\interval[open]{-1}{1}$ by using a maximum reasonable value for acceleration, rotation, strain and heart rate. (Looking at figure \autoref{raw-acceleration}, one might consider $4ms^{-2}$ to be such reasonable acceleration.) 
+The sensor data in the mobile application is a set of vectors containing 1 second of sensor input data, normalised to a range of $\interval[open]{-1}{1}$ by using a maximum reasonable value for acceleration, rotation, strain and heart rate. (Looking at figure \autoref{raw-acceleration}, one might consider 4 ms$^{-2}$ to be such reasonable acceleration.) 
 
 \begin{figure}[hp]
 	\begin{center}
