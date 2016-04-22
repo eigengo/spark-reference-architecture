@@ -26,6 +26,7 @@
 \usepackage{listings}
 \usepackage{hyperref}
 \usepackage{siunitx}
+\usepackage{amsmath}
 
 \sisetup{load-configurations = abbreviations, binary-units = true}
 \intervalconfig {
@@ -134,22 +135,43 @@ struct PACKED threed_data {
 
 struct PACKED header {
     uint16_t preamble;            // 2
-    uint8_t types_count;          // 3
+    uint8_t type_count;           // 3
     uint8_t samples_per_second;   // 4
-    double timestamp;             // 12
-    uint32_t count;               // 16
+    uint32_t timestamp;           // 12
+    uint32_t sample_count;        // 16
     uint32_t type;                // 20
 };
 \end{lstlisting}
 
-The \lstinline{preamble} is a marker sequence, which also allows for detection of endian-ness; though all sensor data-collecting devices we have encountered so far are big endian. The payload consisting of \lstinline{header} followed by 50 samples of \lstinline{threed_data} results in \SI{270}{\byte\per\second} over the BLE connection. 
+The \lstinline{preamble} is a marker sequence, which also allows for detection of endian-ness; though all sensor data-collecting devices we have encountered so far are big endian. The payload consisting of \lstinline{header} followed by 50 samples of \lstinline{threed_data} results in \SI{270}{\byte\per\second} over the BLE connection. Note that the \lstinline{header} includes the \lstinline{timestamp}, which is a monotonously-increasing device time in milliseconds. The mobile application remembers the first seen \lstinline{timestamp} from each sensor for each exercise session, and uses this value to properly align the samples from the sensors. The sensors data includes quantisation error: at \SI{50}{\hertz} one sample represents \SI{20}{\milli\second} of real-time, but the difference of the \lstinline{timestamp}s may not be divisible by $20$. We found that it is sufficient to perform "round-even" correction of the received samples by evenly removing or duplicating the last sample in case of detected quantisation errors.
 
-The sensor data in the mobile application is a set of vectors containing 1 second of sensor input data, normalised to a range of $\interval[open]{-1}{1}$ by using a maximum reasonable value for acceleration, rotation, strain and heart rate. (Looking at figure \autoref{raw-acceleration}, one might consider \SI{4}{ms^{-2}} to be such reasonable acceleration.) 
+Because the consumer-grade sensors often do not have enough processing and communication power to collect \& transmit the data without errors, the mobile application also has to pad missing values from the sensors in order to remain responsive and to be able to provide a full set of sensor values for subsequent processing. We found that for gaps less than \SI{200}{\milli\second}, it is sufficient to extrapolate the samples linearly between the sides of the gap regardless of sensor type. Longer gaps require special treatment in case of accelerometer, gyroscope and strain gauges in smart clothes: in these cases, the application uses the Kalman filter (TODO!) to extrapolate the values between the sides of the gap. The heart rate sensor does not suffer significant loss of accuracy for gaps up to \SI{15}{\second}.
+
+\begin{figure}[hb]
+	\begin{center}
+		\caption{Sensor fusion}
+		\label{fig:sensor-fusion}
+		\includegraphics[width=7cm,keepaspectratio]{ri-sensor-fusion.png}
+	\end{center}
+\end{figure}
+
+Once the sensor data from all sensors has been fused with respect to the sample time, the mobile application performs very simple signal processing: it smooths the signal by convolving it with a $3 \times 3$ kernel (\autoref{eq:smooth-kernel}).
+
+\begin{equation} \label{eq:smooth-kernel}
+	\begin{pmatrix}
+	  ^1/_{16} & ^1/_8 & ^1/_{16} \\
+	  ^1/_8    & ^1/_4 & ^1/_8    \\
+	  ^1/_{16} & ^1/_8 & ^1/_{16}
+	\end{pmatrix}
+\end{equation}
+
+
+The sensor data in the mobile application is a set of vectors containing 1 second of sensor input data, normalised to a range of $\interval[open]{-1}{1}$ by using a maximum reasonable value for acceleration, rotation, strain and heart rate. (Looking at figure \autoref{fig:raw-acceleration}, one might consider \SI{4}{ms^{-2}} to be such reasonable acceleration.) 
 
 \begin{figure}[hp]
 	\begin{center}
 		\caption{Raw acceleration data}
-		\label{raw-acceleration}
+		\label{fig:raw-acceleration}
 		\includegraphics[width=7cm,keepaspectratio]{ri-raw-acceleration.png}
 	\end{center}
 \end{figure}
