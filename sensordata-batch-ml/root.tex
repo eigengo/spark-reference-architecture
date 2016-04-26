@@ -142,7 +142,7 @@ struct PACKED header {
 
 The \lstinline{preamble} is a marker sequence, which also allows for detection of endian-ness; though all sensor data-collecting devices we have encountered so far are big endian. The payload consisting of \lstinline{header} followed by 50 samples of \lstinline{threed_data} results in \SI{270}{\byte\per\second} over the BLE connection. Note that the \lstinline{header} includes the \lstinline{timestamp}, which is a monotonously-increasing device time in milliseconds. The mobile application remembers the first seen \lstinline{timestamp} from each sensor for each exercise session, and uses this value to properly align the samples from the sensors. The sensors data includes quantisation error: at \SI{50}{\hertz} one sample represents \SI{20}{\milli\second} of real-time, but the difference of the \lstinline{timestamp}s may not be divisible by $20$. We found that it is sufficient to perform "round-even" correction of the received samples by evenly removing or duplicating the last sample in case of detected quantisation errors.
 
-Because the consumer-grade sensors often do not have enough processing and communication power to collect \& transmit the data without errors, the mobile application also has to pad missing values from the sensors in order to remain responsive and to be able to provide a full set of sensor values for subsequent processing. We found that for gaps less than \SI{200}{\milli\second}, it is sufficient to extrapolate the samples linearly between the sides of the gap regardless of sensor type. Longer gaps require special treatment in case of accelerometer, gyroscope and strain gauges in smart clothes: in these cases, the application uses the Kalman filter (TODO!) to extrapolate the values between the sides of the gap. The heart rate sensor does not suffer significant loss of accuracy for gaps up to \SI{15}{\second}.
+Because the consumer-grade sensors often do not have enough processing and communication power to collect \& transmit the data without errors, the mobile application also has to pad missing values from the sensors in order to remain responsive and to be able to provide a full set of sensor values for subsequent processing. We found that for gaps less than \SI{200}{\milli\second}, it is sufficient to extrapolate the samples linearly between the sides of the gap regardless of sensor type. Longer gaps require special treatment in case of accelerometer, gyroscope and strain gauges in smart clothes: in these cases, the application uses the Kalman filter assuming constant acceleration of \SI{1}{\meter\second^{-2}} to extrapolate the values between the sides of the gap. The heart rate sensor does not suffer significant loss of accuracy for gaps up to \SI{15}{\second}.
 
 \begin{figure}[hb]
 	\begin{center}
@@ -162,16 +162,7 @@ Once the sensor data from all sensors has been fused with respect to the sample 
 	\end{pmatrix}
 \end{equation}
 
-
-The sensor data in the mobile application is a set of vectors containing 1 second of sensor input data, normalised to a range of $\interval[open]{-1}{1}$ by using a maximum reasonable value for acceleration, rotation, strain and heart rate. (Looking at figure \autoref{fig:raw-acceleration}, one might consider \SI{4}{ms^{-2}} to be such reasonable acceleration.) 
-
-\begin{figure}[hp]
-	\begin{center}
-		\caption{Raw acceleration data}
-		\label{fig:raw-acceleration}
-		\includegraphics[width=7cm,keepaspectratio]{ri-raw-acceleration.png}
-	\end{center}
-\end{figure}
+Finally, the sensor data in the mobile application is a set of vectors containing 1 second of sensor input data, normalised to a range of $\interval[open]{-1}{1}$ by using a maximum reasonable value for acceleration, rotation, strain and heart rate. The maximum values are determined by the limitations of the sensor hardware together with reasonable limitations of human movement and together with the ranges of the protocol. For the three-value protocol used for the accelerometer and gyroscope data, and for the strain sensors, the limit of each element is the range of signed \SI{13}{\bit} integer: $\interval[open]{-4096}{4095}$. The unit of the measurement depends on the underlying sensor type: $0.01\ ms^{-2}$ for accelerometer, \SI{\pi/1800}{\radian\per\second} for gyroscope, .
 
 
 It is important to realise that a single sensor input alone is not sufficient to accurately distinguish exercise from non-exercise. 
