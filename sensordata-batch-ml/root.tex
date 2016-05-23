@@ -136,28 +136,27 @@ With the fine-grained location data available, the application is \emph{expectin
 \end{center}
 \end{table}
 
-\begin{figure}[hb]
-	\begin{center}
-		\caption{Exercise sequence model}
-		\label{fig:model-sss}
-		%\includegraphics[width=7cm,keepaspectratio]{fully-wired.svg}
-	\end{center}
-\end{figure}
+Finally, the mobile application asks the user to confirm the label for the collected sensor data. Given the good performance of the exercise recognition (particularly when using fine-grained location services), this is typically just a \emph{confirm} step rather than complex data entry exercise. The mobile application builds a local store of the time regions of labelled sensor data. This store, together with the Markov chain representing the exercise sequence and the final feedback (happy, indifferent, unhappy) is submitted to the server. The server decompresses \& decodes the submitted data and stores it in tabular form in Apache Cassandra, referencing the user's biometric ID. 
 
+\section{Server components}
 
-If the user only wears an accelerometer on his or her wrist, then the setup movement for barbell bench press is the same as the setup movement for dumbbell bench press. In 94 \% of our test user base of 451, the next exercise prediction refined by the fine-grained location eliminated ambiguity of setup movement detection in all their exercises. \autoref{fig:model-sequence+setup} shows the final decision state of the mobile application.
+The server is an Akka cluster with REST API which is used by the mobile application to submit the exercise session data.
 
-\begin{figure}[hb]
-	\begin{center}
-		\caption{Exercise sequence model}
-		\label{fig:model-sequence+setup}
-		\includegraphics[width=7cm,keepaspectratio]{ri-model-sequence+setup.png}
-	\end{center}
-\end{figure}
+\section{Apache Spark batch analytics}
+
+Big data tasks here.
+
+\section{Machine learning}
+
+ML jobs here.
+
+\section{Server infrastructure}
+
+Infrastructure discussion here.
 
 \section{Summary}
 
-TODO
+The focus of our work is on guiding the user during his or her exercise or physiotherapy session; to do that, it is necessary to indicate to the user \emph{what to do next} and to recognise that the exercise is actually being performed, and to give feedback about the exercise being performed, as early as possible. In our testing, we found that delays of more than \SI{1}{\second} confuse the users. It was not possible to use the work in \cite{morris:2014ir}; instead, we needed to build our own probabilistic model of next exercise and then eager sensor data recognition layer. It is equally important to accurately collect labelled data, this is achieved through frictionless user interface. The labelled sensor data, the exercise sequences, and the feedback data is written---together with the matching unstable biometric ID and associated profile---to a Apache Cassandra database in normal tabular form. The Apache Spark jobs then identify clusters of biometric IDs based on the information in the profiles, together with (per cluster) the best sequence of exercises and the best sequence of exercise sessions, the top $n$ user-contributed exercises.
 
 \addtolength{\textheight}{-12cm}  % This command serves to balance the column lengths
                                   % on the last page of the document manually. It shortens
@@ -174,6 +173,8 @@ TODO
 \bibitem{apache-cassandra} Apache Cassandra.
 \bibitem{apache-spark} Apache Spark.
 \bibitem{ibeacon} iBeacon.
+\bibitem{morris:2014ir} Morris, D., Saponas, T. S., Guillory, A., \& Kelner, I. (2014). RecoFit (pp. 3225--3234). Presented at the the 32nd annual ACM conference, New York, New York, USA: ACM Press. http://doi.org/10.1145/2556288.2557116
+
 
 \end{thebibliography}
 
