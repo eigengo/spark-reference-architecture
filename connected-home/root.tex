@@ -66,11 +66,24 @@ The Lightbend stack, with help from Kafka, Apache Spark and Mesos are the perfec
 
 \begin{figure}[h]
 	\begin{center}
-		\caption{Exercise sequence model}
+		\caption{Architecture}
 		\label{fig:ri-architecture}
 		\includegraphics[width=7cm,keepaspectratio]{ri-arch.png}
 	\end{center}
 \end{figure}
+
+\section{Infrastructure}
+
+To run this application, the infrastructure needs to be able to make the most of the available computing resources (CPU, GPU, RAM, storage, etc.) and to provide sufficient service discovery functionality; it must also provide sufficient monitoring and log management. The monitoring components need to be able to trigger scale up or down as necessary, the triggers in this type of architecture are typically back-pressure indicators. The main infrastructure components are shown in \autoref{fig:ri-infrastructure}.
+
+\begin{figure}[h]
+	\begin{center}
+		\caption{Infrastructure}
+		\label{fig:ri-infrastructure}
+		\includegraphics[width=7cm,keepaspectratio]{ri-infrastructure.jpg}
+	\end{center}
+\end{figure}
+
 
 \section{Summary}
 
