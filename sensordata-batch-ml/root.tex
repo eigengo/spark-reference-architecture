@@ -76,11 +76,25 @@ The application on the user's smartphone connects data from the available sensor
 
 The sensors shown here as consumer-grade wearables perform only the basic hardware interaction: there is no pre-processing of the recorded data. The system accepts accelerometer, gyroscope, heart rate and---where available---data from strain gauges in smart clothes. The mobile application performs the real-time processing of the inputs, displays the next exercise the user should perform (allowing the user to change the suggestion by simply walking to a station for a different exercise, or by beginning a different exercise). The mobile application also prompts the user to confirm correct labels for the recorded data. \emph{This is the key component in the entire system: the frictionless user experience gives the system very accurate labels on very clean data}.
 
-The mobile submits the entire session data (the sensor data, matching labels and latest user behaviour models) in a single request to the Akka \cite{akka} cluster---a CQRS/ES \cite{cqrs-es} microservice implementation. The Akka cluster stores its events and snapshots in a journal, implemented by the Apache Cassandra \cite{apache-cassandra} database. Alongside the events and snapshots, which are opaque to non-Akka systems, the \texttt{exercise} microservice saves the sensor data and the matching labels in a properly formed tabular structure. This structure allows the Apache Spark \cite{apache-spark} cluster to be used for typical big data tasks.
+The mobile submits the entire session data (the sensor data, matching labels and latest user behaviour models) in a single request to the Akka \cite{akka} cluster---a CQRS/ES \cite{cqrs-es} microservice implementation. The Akka cluster stores its events and snapshots in a journal, implemented by the Apache Cassandra \cite{apache-cassandra} database. Alongside the events and snapshots, which are opaque to non-Akka systems, the \texttt{exercise} microservice saves the sensor data and the matching labels in a properly formed tabular structure. This structure allows the Apache Spark \cite{apache-spark} cluster to be used for typical big data tasks. An important consideration is privacy and security of the data: the system does not use stable identifiers for the biometric data. This is similar to the unstable advertising identifier used in, for example, the iOS devices \cite{ios-advertising-identifier}. The unstable \emph{biometric identifier} can be refreshed at arbitrary points in time; for very sensitive applications (e.g. clinical physiotherapy), we refresh the biometric identifier after each session; for typical consumer scenarios, we give the users the option to refresh the biometric identifier.
 
-The Spark cluster Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec magna purus, gravida et molestie a, bibendum et libero. Maecenas sed egestas erat. Suspendisse ullamcorper posuere erat, et finibus turpis tempor varius. Aenean tempus tellus sit amet arcu interdum, eu ornare nulla egestas. Nulla facilisi. Sed imperdiet urna et convallis consequat. Nullam nec ex eu leo auctor interdum eu id nunc. Fusce fermentum tempor gravida. Morbi sit amet augue a erat condimentum vulputate. Proin sed mattis lorem, viverra condimentum metus. Suspendisse luctus aliquam placerat. Donec sit amet mollis massa. Aliquam luctus dui in imperdiet accumsan. Nam nisi ligula, dapibus id interdum in, dictum efficitur ligula. Donec bibendum mollis convallis. Fusce maximus non orci quis laoreet.
+The Apache Spark cluster reads the fitness profiles (associated with the unstable biometric identifier) and computes clusters of users by examining the values in the fitness profile. Even though the profile information holds self-reported data, the data we store include age bracket ($\interval[open]{18}{25}$, $\interval[open]{25}{35}$, $\interval[open]{35}{45}$, ..., $\interval[open]{75}{\inf}$), sex, self-reported fitness level (beginner, intermediate, enthusiast, athlete), self-reported weight and self-reported height.
 
-The models are implemented in Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec magna purus, gravida et molestie a, bibendum et libero. Maecenas sed egestas erat. Suspendisse ullamcorper posuere erat, et finibus turpis tempor varius. Aenean tempus tellus sit amet arcu interdum, eu ornare nulla egestas. Nulla facilisi. Sed imperdiet urna et convallis consequat. Nullam nec ex eu leo auctor interdum eu id nunc. Fusce fermentum tempor gravida. Morbi sit amet augue a erat condimentum vulputate. Proin sed mattis lorem, viverra condimentum metus. Suspendisse luctus aliquam placerat. Donec sit amet mollis massa. Aliquam luctus dui in imperdiet accumsan. Nam nisi ligula, dapibus id interdum in, dictum efficitur ligula. Donec bibendum mollis convallis. Fusce maximus non orci quis laoreet.
+Once we have the biometric identifiers for each cluster, we read the sensor data, together with the single-session and all-sessions metadata, and find:
+
+\begin{itemize}
+\item The Markov chain of exercise sessions that results in greatest improvement (where improvement may be muscle mass gain, fat loss, and \emph{hapiness}.)
+\item The Markov chain of exercises in a session that results in greatest improvement (where improvement may be muscle mass gain, fat loss, and \emph{hapiness}.)
+\item The most and least popular exercises
+\end{itemize}
+
+The output of these \emph{big data} tasks is written back to the Apache Cassandra database; the Akka cluster reads the exercise-related output to provide advice back to the users; the machine learning training and evaluation programs reads the sensor-data related output to compute new models to recognise the exercises.
+
+The models to predict exercise from sensor data are implemented in a cluster of keras \cite{keras} training and evaluation programs. These programs read the sensor data for each cluster, expand the sensor data to each combination of sensors, then train the most successful convolutional neural networks identified through random evolution of previous training executions. (The first execution is human-defined, starting with a three-layer network.) For every sensor data split and every cluster, the training program selects $n$ most successful CNN architectures from the previous runs, then divides the data into training and test datasets. It then randomly mutates $m$ ($m << n$) CNNs before fitting each CNN to the testing data. The evaluation program then evaluates all new $n$ CNNs, keeping only the most successful ones (defined by the evaluation's F1 score).
+
+% The architecture of the MLP for a fully-wired human has 1200 inputs, 250 rectifier units, 100 rectifier units, ending up with 32 softmax units. 
+
+The models' architectures, parameters and evaluation scores are written back to the database. The Akka cluster then selects the best model (architecture and parameters) and uses the Apple content delivery network to push it to the users with the matching biometric identifiers. (This enables the Akka cluster to concentrate on its primary task: sensor data ingestion, leaving all other data manipulation and transfer tasks to external services while maintaining frictionless user experience.)
 
 \subsection{Mobile application}
 
@@ -88,7 +102,7 @@ The sensors send the data in \SI{1}{\second} batches; the application on the mob
 
 \begin{figure}[h]
 	\begin{center}
-		\caption{Exercise sequence model}
+		\caption{Exercise sequence model with no context}
 		\label{fig:model-sequence}
 		\includegraphics[width=7cm,keepaspectratio]{ri-model-sequence.png}
 	\end{center}
@@ -100,13 +114,13 @@ To make the next-exercise prediction more accurate, the mobile application uses 
 
 \begin{figure}[h]
 	\begin{center}
-		\caption{Exercise sequence model}
+		\caption{Exercise sequence model with location context}
 		\label{fig:model-sequence+location}
 		\includegraphics[width=7cm,keepaspectratio]{ri-model-sequence+location.png}
 	\end{center}
 \end{figure}
 
-With the fine-grained location data available, the application is \emph{expecting} to see a movement that precedes exercises A or C. We call this movement the \emph{setup movement}. The setup movement classifier is a multi-layer perceptron, which takes \SI{1}\second of sensor input and produces probabilities classes that represent the setup movement for groups of exercises. The architecture of the MLP is driven by the sensor data as its inputs; for example, accelerometer-only MLP has 150 inputs (50 samples of the acceleration vector), the subsequent layer has 45 rectifier units, then 40 rectifier units, ending up with 32 softmax units, where 32 is the number of recognised setup movements. The architecture of the MLP for a fully-wired human has 1200 inputs, 250 rectifier units, 100 rectifier units, ending up with 32 softmax units. It is important to measure and optimise the power requirements for the computation; on iOS, we took advantage of the vDSP and veclib frameworks, which offer optimised vector operations. The MLP classes are not the exercises themselves, but the setup movements; one setup movement can map to multiple exercises. To provide accurate prediction of the exercise about to be started, the mobile application takes into account the expected exercise (given the user's typical behaviour), and the fine-grained location data. The performance of the exercise prediction for accelerometer on the user's wrist is shown in \autoref{tbl:setup-movement-performance-accelerometer}; the performance of the exercise prediction rises significantly in fully-wired human (viz \autoref{tbl:setup-movement-performance-all}).
+With the fine-grained location data available, the application is \emph{expecting} to see a movement that precedes exercises A or C. We call this movement the \emph{setup movement}. The setup movement classifier is a multi-layer perceptron, which takes \SI{1}\second of sensor input and produces probabilities classes that represent the setup movement for groups of exercises. The architecture of the MLP is driven by the sensor data as its inputs; for example, accelerometer-only MLP has 150 inputs (50 samples of the acceleration vector) and as many outputs as the number of recognised setup movements. It is important to measure and optimise the power requirements for the computation; on iOS, we took advantage of the vDSP and veclib frameworks, which offer optimised vector operations. The MLP classes are not the exercises themselves, but the setup movements; one setup movement can map to multiple exercises. To provide accurate prediction of the exercise about to be started, the mobile application takes into account the expected exercise (given the user's typical behaviour), and the fine-grained location data. The performance of the exercise prediction for accelerometer on the user's wrist is shown in \autoref{tbl:setup-movement-performance-accelerometer}; the performance of the exercise prediction rises significantly in fully-wired human (viz \autoref{tbl:setup-movement-performance-all}).
 
 \begin{table}[h]
 \caption{Exercise prediction performance (accelerometer)}
@@ -138,22 +152,22 @@ With the fine-grained location data available, the application is \emph{expectin
 
 \begin{figure}[hb]
 	\begin{center}
-		\caption{Exercise sequence model}
-		\label{fig:model-sss}
-		%\includegraphics[width=7cm,keepaspectratio]{fully-wired.svg}
+		\caption{Exercise sequence model with location \& setup movement}
+		\label{fig:model-sequence+setup}
+		\includegraphics[width=7cm,keepaspectratio]{ri-model-sequence+setup.png}
 	\end{center}
 \end{figure}
 
 
 If the user only wears an accelerometer on his or her wrist, then the setup movement for barbell bench press is the same as the setup movement for dumbbell bench press. In 94 \% of our test user base of 451, the next exercise prediction refined by the fine-grained location eliminated ambiguity of setup movement detection in all their exercises. \autoref{fig:model-sequence+setup} shows the final decision state of the mobile application.
 
-\begin{figure}[hb]
-	\begin{center}
-		\caption{Exercise sequence model}
-		\label{fig:model-sequence+setup}
-		\includegraphics[width=7cm,keepaspectratio]{ri-model-sequence+setup.png}
-	\end{center}
-\end{figure}
+\section{Akka cluster}
+The Akka cluster is a CQRS/ES system, which exposes REST APIs for the mobile application. The REST requests it receives are treated as commands; once a command is validated, the code in the cluster turns it into an \emph{event} and persists it in the journal. Later on, another component may represent the system's state as the sum of all the events in the journal. This \emph{command / query responsibility separation} approach makes it possible to efficiently distribute the processing required by the system's components. (For example, if the users often request a view of the state of the system, then the \emph{query} components receive more resources.) The Akka toolkit uses Actor-based concurrency: within an actor, all computation is synchronous; the toolkit handles asynchronous communication between actors. This allows us to maintain clear boundary on any mutable state: if is kept within an actor, it is safe. 
+
+\begin{enumerate}
+\item 
+\end{enumerate}
+
 
 \section{Summary}
 
@@ -174,6 +188,8 @@ TODO
 \bibitem{apache-cassandra} Apache Cassandra.
 \bibitem{apache-spark} Apache Spark.
 \bibitem{ibeacon} iBeacon.
+\bibitem{ios-advertising-identifier} iOS advertising identifier.
+\bibitem{keras} keras.
 
 \end{thebibliography}
 
