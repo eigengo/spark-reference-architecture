@@ -176,7 +176,16 @@ Glossing over some important details, its execution is the following loop:
 \item Save the measured performance and hyperparameters
 \end{itemize}
 
-See \autoref{fig:ri-model-evolution} for an illustration of this process.
+The hyperparameter mutating code is fairly basic at the moment; it can only
+\begin{itemize}
+\item Mutate dense layer's activation functions
+\item Mutate dropout layer's rate
+\item Mutate convolution layer's kernel
+\item Remove or add layer
+\item Mutate learning rate, momentum and and decay of the SGD optimiser
+\end{itemize}
+
+Notice also that our evolution code is purely random; there is no optimiser. This code does produce well-performing models, though \emph{its energy or cost efficiency is extremely poor}. \autoref{fig:ri-model-evolution} illustrates this process for 2 models hyperparameters.
 
 \begin{figure}[h]
     \begin{center}
@@ -186,35 +195,9 @@ See \autoref{fig:ri-model-evolution} for an illustration of this process.
     \end{center}
 \end{figure}
 
-The Python / keras \cite{keras} code loads (from the Apache Cassandra cluster) the labelled data associated with each biometric ID cluster identified by the Apache Spark job; it generates new model hyperparameters by randomly mutating some of them from the best $n$ last-known models. It then splits the input data into training and test datasets, and fits it to each of the models. 
+The final consideration is the sensor data explosion: this is something that we actually need in our system to be able to make as much of the collected data as possible. While most users wear only a single smartwatch (which gives us accelerometer data from one wrist), there are some users who wear many more sensors. What we call a \emph{fully-wired human} wears accelerometer and gyroscope on the wirst, together heart rate monitor and sports clothes that contain strain gauges along major muscle groups. This gives us (at the moment) 2 data points from the wrist, 1 from the heart rate sensor (we drop down to simple heart rate, we do not measure the full ECG traces), and \emph{20 data points from the muscle groups}. Just under \SI{50}{\percent} of our users fall somewhere between the smartwatch-only and fully-wired categories. To ensure that we make the most of every user, the training program needs to expand the recorded data into all known sensor combinations. So, for a dataset with $n$ sensors, we expand it into $\binom nn + \binom n{n-1} + \binom n{n-2} + ... + \binom n1$ datasets.
 
-\begin{lstlisting}[language=python,caption={MLP},label={lst:ri-mlp}]
-import keras.models 
-import keras.layers.core 
-import keras.optimizers
 
-model = Sequential()
-model.add(Dense(input_dim=X.shape[1], 
-                output_dim=150, 
-                activation='tanh', 
-                init='uniform'))
-model.add(Dropout(0.5))
-model.add(Dense(input_dim=150, 
-                output_dim=100, 
-                activation='tanh', 
-                init='uniform'))
-model.add(Dropout(0.5))
-model.add(Dense(input_dim=100, 
-                output_dim=4, 
-                activation='tanh', 
-                init='uniform'))
-
-sgd = SGD(lr=0.1, decay=1e-6, 
-          momentum=0.9, nesterov=True)
-model.compile(loss='mean_squared_error', 
-              optimizer=sgd, 
-              metrics=['accuracy'])
-\end{lstlisting}
 
 Vivamus urna velit, volutpat ut tincidunt sit amet, pulvinar vitae est. Nam tortor sapien, sagittis non luctus sit amet, porttitor a purus. Donec mattis blandit bibendum. Morbi ipsum lacus, gravida ut nibh semper, porta tincidunt ex. Sed tellus lectus, posuere in facilisis quis, suscipit eu tortor. Maecenas sagittis diam non orci scelerisque, vehicula rutrum ipsum elementum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin bibendum justo gravida sem accumsan consequat. Nunc tristique aliquam magna, id convallis tellus gravida et. Sed orci est, tempus eu ligula sed, posuere feugiat nunc. Sed est mauris, dignissim dignissim pretium in, elementum a neque. Phasellus mollis sollicitudin justo, ut commodo turpis volutpat in. Fusce egestas nunc dui, vel mollis tellus interdum vel. Donec porttitor lorem non mauris porttitor, euismod vestibulum nisi tincidunt. Nunc fringilla risus nulla, id vulputate sem blandit ut. Proin est mauris, viverra in interdum quis, fringilla at augue.
 
