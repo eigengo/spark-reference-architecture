@@ -67,11 +67,11 @@ The application on the user's smartphone connects data from the available sensor
 \subsection{Main components}
 
 \begin{figure}[hb]
-	\begin{center}
-		\caption{Components}
-		\label{fig:components}
-		\includegraphics[width=7cm,keepaspectratio]{ri-arch.png}
-	\end{center}
+    \begin{center}
+        \caption{Components}
+        \label{fig:components}
+        \includegraphics[width=7cm,keepaspectratio]{ri-arch.png}
+    \end{center}
 \end{figure}
 
 The sensors shown here as consumer-grade wearables perform only the basic hardware interaction: there is no pre-processing of the recorded data. The system accepts accelerometer, gyroscope, heart rate and---where available---data from strain gauges in smart clothes. The mobile application performs the real-time processing of the inputs, displays the next exercise the user should perform (allowing the user to change the suggestion by simply walking to a station for a different exercise, or by beginning a different exercise). The mobile application also prompts the user to confirm correct labels for the recorded data. \emph{This is the key component in the entire system: the frictionless user experience gives the system very accurate labels on very clean data}.
@@ -99,11 +99,11 @@ The models' hyper-parameters, parameters and evaluation scores are written back 
 The sensors send the data in \SI{1}{\second} batches; the application on the mobile resamples the sampling rate to \SI{50}\hertz. (Accelerometer and gyroscope typically sample at this rate, heart rate and the strain gauges in smart clothes can be up-sampled to \SI{50}{\hertz} easily.) The mobile application ingests the data from the sensors and, together with a statistical model of the user's short-term behaviour, attempts to identify the movement. The models in the mobile application can make successful predictions of sequence of exercises in a session and the properties of each exercise (i.e. weight, number of repetitions, duration, intensity). The model used to predict sequence of exercise sessions and exercises within a session is a Markov chain \cite{markov-chain-exercise}. This approach allows the application to deal with the reality of exercise in a public gym, where the station for the next suggested exercise might not be available. The Markov chain, together with a bio-mechanical model of the main muscle groups, gives the users the flexibility to achieve their workout targets even in crowded gyms. The sequence of exercise predictions for one particular exercise sessions are illustrated on \autoref{fig:model-sequence}.
 
 \begin{figure}[h]
-	\begin{center}
-		\caption{Exercise sequence model with no context}
-		\label{fig:model-sequence}
-		\includegraphics[width=7cm,keepaspectratio]{ri-model-sequence.png}
-	\end{center}
+    \begin{center}
+        \caption{Exercise sequence model with no context}
+        \label{fig:model-sequence}
+        \includegraphics[width=7cm,keepaspectratio]{ri-model-sequence.png}
+    \end{center}
 \end{figure}
 
 The numbers in \autoref{fig:model-sequence} represent the count of transitions taken; hence it is possible to calculate the probability of transition from any given state. The state names represent the exercise labels, in real application, they are the real exercise names. The mobile application can either receive the chain when the user selects one of the pre-defined exercise programmes, or it can construct the chain from empty if the user choses to start his or her custom workout. This gives the application an intuitive feel; its suggestions are what the users usually do. Finally, the information in the chain allows the system to identify the most popular sequences of exercises, to identify exercises that the users do not like; more interestingly, the system can use the information in the chain to identify sequence of exercises that leads to the best improvement. (At this point, we do not define what the improvement is: in some applications, it may be weight loss; in other applications, it may be greatest mobility range improvement; and many others.)
@@ -111,11 +111,11 @@ The numbers in \autoref{fig:model-sequence} represent the count of transitions t
 To make the next-exercise prediction more accurate, the mobile application uses fined-grained location services. The location services are implemented using bluetooth beacons. The beacons operate in the iBeacon mode \cite{ibeacon}; each beacon in this mode transmits its identifier, a major, and minor values. The mobile application sets up continuous scanning of a major value which identifies exercise equipment, receiving notifications of beacons and their minor values as they come into range. The mobile application then filters the exercise states keeping only those that are associated with a particular area. (Viz \autoref{fig:model-sequence+location}.)
 
 \begin{figure}[h]
-	\begin{center}
-		\caption{Exercise sequence model with location context}
-		\label{fig:model-sequence+location}
-		\includegraphics[width=7cm,keepaspectratio]{ri-model-sequence+location.png}
-	\end{center}
+    \begin{center}
+        \caption{Exercise sequence model with location context}
+        \label{fig:model-sequence+location}
+        \includegraphics[width=7cm,keepaspectratio]{ri-model-sequence+location.png}
+    \end{center}
 \end{figure}
 
 With the fine-grained location data available, the application is \emph{expecting} to see a movement that precedes exercises A or C. We call this movement the \emph{setup movement}. The setup movement classifier is a multi-layer perceptron, which takes \SI{1}\second of sensor input and produces probabilities classes that represent the setup movement for groups of exercises. The hyper-parameters of the MLP is driven by the sensor data as its inputs; for example, accelerometer-only MLP has 150 inputs (50 samples of the acceleration vector) and as many outputs as the number of recognised setup movements. It is important to measure and optimise the power requirements for the computation; on iOS, we took advantage of the vDSP and veclib frameworks, which offer optimised vector operations. The MLP classes are not the exercises themselves, but the setup movements; one setup movement can map to multiple exercises. To provide accurate prediction of the exercise about to be started, the mobile application takes into account the expected exercise (given the user's typical behaviour), and the fine-grained location data. The performance of the exercise prediction for accelerometer on the user's wrist is shown in \autoref{tbl:setup-movement-performance-accelerometer}; the performance of the exercise prediction rises significantly in fully-wired human (viz \autoref{tbl:setup-movement-performance-all}).
@@ -125,9 +125,9 @@ With the fine-grained location data available, the application is \emph{expectin
 \label{tbl:setup-movement-performance-accelerometer}
 \begin{center}
 \begin{tabular}{|l||m{1cm}|m{1cm}|m{1cm}|m{1cm}|}
-\hline            			& Accuracy & Precision & Recall & F1 \\
-\hline No context 			& !!       & !!        & !!     & !! \\
-\hline Behaviour  			& !!       & !!        & !!     & !! \\ 
+\hline                      & Accuracy & Precision & Recall & F1 \\
+\hline No context           & !!       & !!        & !!     & !! \\
+\hline Behaviour            & !!       & !!        & !!     & !! \\ 
 \hline Behaviour + Location & !!       & !!        & !!     & !! \\
 \hline
 \end{tabular}
@@ -139,9 +139,9 @@ With the fine-grained location data available, the application is \emph{expectin
 \label{tbl:setup-movement-performance-all}
 \begin{center}
 \begin{tabular}{|l||m{1cm}|m{1cm}|m{1cm}|m{1cm}|}
-\hline            			& Accuracy & Precision & Recall & F1 \\
-\hline No context 			& !!       & !!        & !!     & !! \\
-\hline Behaviour  			& !!       & !!        & !!     & !! \\ 
+\hline                      & Accuracy & Precision & Recall & F1 \\
+\hline No context           & !!       & !!        & !!     & !! \\
+\hline Behaviour            & !!       & !!        & !!     & !! \\ 
 \hline Behaviour + Location & !!       & !!        & !!     & !! \\
 \hline
 \end{tabular}
@@ -165,6 +165,57 @@ Vivamus urna velit, volutpat ut tincidunt sit amet, pulvinar vitae est. Nam tort
 
 \section{Machine learning}
 
+The ML training and evaluation programs use Python and run in Docker containers. To support fast development cycle, we build two flavours of Docker images: a \emph{light} image that can run on nearly any underlying hardware, and a CUDA \cite{cuda} image that runs on the EC2 \texttt{g2.2xlarge} instance.
+
+Glossing over some important details, its execution is the following loop:
+
+\begin{itemize}
+\item Generate new model hyperparameters by appending randomly mutated hyperparameters to the current set of hyperparameters,
+\item For each model hyperparameters, construct a model and fit the training dataset,
+\item Measure the fitted model's performance using the test dataset,
+\item Save the measured performance and hyperparameters
+\end{itemize}
+
+See \autoref{fig:ri-model-evolution} for an illustration of this process.
+
+\begin{figure}[h]
+    \begin{center}
+        \caption{Model evolution}
+        \label{fig:ri-model-evolution}
+        \includegraphics[width=7cm,keepaspectratio]{ri-model-evolution.png}
+    \end{center}
+\end{figure}
+
+The Python / keras \cite{keras} code loads (from the Apache Cassandra cluster) the labelled data associated with each biometric ID cluster identified by the Apache Spark job; it generates new model hyperparameters by randomly mutating some of them from the best $n$ last-known models. It then splits the input data into training and test datasets, and fits it to each of the models. 
+
+\begin{lstlisting}[language=python,caption={MLP},label={lst:ri-mlp}]
+import keras.models 
+import keras.layers.core 
+import keras.optimizers
+
+model = Sequential()
+model.add(Dense(input_dim=X.shape[1], 
+                output_dim=150, 
+                activation='tanh', 
+                init='uniform'))
+model.add(Dropout(0.5))
+model.add(Dense(input_dim=150, 
+                output_dim=100, 
+                activation='tanh', 
+                init='uniform'))
+model.add(Dropout(0.5))
+model.add(Dense(input_dim=100, 
+                output_dim=4, 
+                activation='tanh', 
+                init='uniform'))
+
+sgd = SGD(lr=0.1, decay=1e-6, 
+          momentum=0.9, nesterov=True)
+model.compile(loss='mean_squared_error', 
+              optimizer=sgd, 
+              metrics=['accuracy'])
+\end{lstlisting}
+
 Vivamus urna velit, volutpat ut tincidunt sit amet, pulvinar vitae est. Nam tortor sapien, sagittis non luctus sit amet, porttitor a purus. Donec mattis blandit bibendum. Morbi ipsum lacus, gravida ut nibh semper, porta tincidunt ex. Sed tellus lectus, posuere in facilisis quis, suscipit eu tortor. Maecenas sagittis diam non orci scelerisque, vehicula rutrum ipsum elementum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin bibendum justo gravida sem accumsan consequat. Nunc tristique aliquam magna, id convallis tellus gravida et. Sed orci est, tempus eu ligula sed, posuere feugiat nunc. Sed est mauris, dignissim dignissim pretium in, elementum a neque. Phasellus mollis sollicitudin justo, ut commodo turpis volutpat in. Fusce egestas nunc dui, vel mollis tellus interdum vel. Donec porttitor lorem non mauris porttitor, euismod vestibulum nisi tincidunt. Nunc fringilla risus nulla, id vulputate sem blandit ut. Proin est mauris, viverra in interdum quis, fringilla at augue.
 
 Vivamus urna velit, volutpat ut tincidunt sit amet, pulvinar vitae est. Nam tortor sapien, sagittis non luctus sit amet, porttitor a purus. Donec mattis blandit bibendum. Morbi ipsum lacus, gravida ut nibh semper, porta tincidunt ex. Sed tellus lectus, posuere in facilisis quis, suscipit eu tortor. Maecenas sagittis diam non orci scelerisque, vehicula rutrum ipsum elementum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin bibendum justo gravida sem accumsan consequat. Nunc tristique aliquam magna, id convallis tellus gravida et. Sed orci est, tempus eu ligula sed, posuere feugiat nunc. Sed est mauris, dignissim dignissim pretium in, elementum a neque. Phasellus mollis sollicitudin justo, ut commodo turpis volutpat in. Fusce egestas nunc dui, vel mollis tellus interdum vel. Donec porttitor lorem non mauris porttitor, euismod vestibulum nisi tincidunt. Nunc fringilla risus nulla, id vulputate sem blandit ut. Proin est mauris, viverra in interdum quis, fringilla at augue.
@@ -173,22 +224,22 @@ Vivamus urna velit, volutpat ut tincidunt sit amet, pulvinar vitae est. Nam tort
 
 \section{Server infrastructure}
 
-To run the system's server components, a modern cluster management \& distributed init system abstracting over a fault-tolerant, self-healing infrastructure is needed. In our case, a highly available Mesos\cite{mesos} cluster provides abstraction at the datacentre level and acts as a datacentre-wide resource manager. To achieve faster deployments, the microservices that comprise the system are packaged as Docker\cite{docker} images. The build system (Jenkins\cite{jenkins}) starts by building the Docker images. These images are deployed and managed using a scheduler (Marathon\cite{marathon}) which acts as the distributed init system and the process manager. Marathon is used for long-running jobs such as the microservices, and the database cluster; Chronos\cite{chronos} is used to manage the short-lived jobs (e.g. the batching Apache Spark jobs). Having Marathon and Chronos job configurations in git allows for any changes to infrastructure to be versioned, traceable and auditable. Job configuration changes are synchronised to a distributed key-value store (Consul\cite{consul}). When a job configuration changes, the Consul handler uses the scheduler API (Marathon REST API) to trigger the infrastructure update through the cluster OS (Mesos). Finally, the cluster OS metrics and the list of running services from the service registry provide the information for the dynamic scaling code.
+To run the system's server components, a modern cluster management \& distributed init system abstracting over a fault-tolerant, self-healing infrastructure is needed. In our case, a highly available Mesos \cite{mesos} cluster provides abstraction at the datacentre level and acts as a datacentre-wide resource manager. To achieve faster deployments, the microservices that comprise the system are packaged as Docker \cite{docker} images. The build system (Jenkins \cite{jenkins}) starts by building the Docker images. These images are deployed and managed using a scheduler (Marathon \cite{marathon}) which acts as the distributed init system and the process manager. Marathon is used for long-running jobs such as the microservices, and the database cluster; Chronos \cite{chronos} is used to manage the short-lived jobs (e.g. the batching Apache Spark jobs). Having Marathon and Chronos job configurations in git allows for any changes to infrastructure to be versioned, traceable and auditable. Job configuration changes are synchronised to a distributed key-value store (Consul \cite{consul}). When a job configuration changes, the Consul handler uses the scheduler API (Marathon REST API) to trigger the infrastructure update through the cluster OS (Mesos). Finally, the cluster OS metrics and the list of running services from the service registry provide the information for the dynamic scaling code.
 This infrastructure allowed us to implement and maintain a robust and reliable production system. \autoref{fig:infrastructure} illustrates the outline of our cloud-based infrastructure and highlights the workflow of putting code to production.
 
 \begin{figure}[h]
-	\begin{center}
-		\caption{Infrastructure diagram}
-		\label{fig:infrastructure}
-		\includegraphics[width=7cm,keepaspectratio]{ri-infrastructure.png}
-	\end{center}
+    \begin{center}
+        \caption{Infrastructure diagram}
+        \label{fig:infrastructure}
+        \includegraphics[width=7cm,keepaspectratio]{ri-infrastructure.png}
+    \end{center}
 \end{figure}
 
 There are many more topics that we could not describe here: rolling upgrades without message loss, zero downtime deployment, message versioning, API versioning, message integrity verification, detailed privacy and security concerns, wire formats, cluster consistencies, reliable multi-region and global implementations, test and training data management, model evolution, centralized logging, back pressure reporting and handling, and many more. 
 
 \section{Further research}
 
-We are also very excited to use this work as a basis for a Horizon 2020\cite{horizon2020} project proposal; the aim of the Horizon 2020 project is to help as many people as possible to help become more active, while at the same time preventing injury; to assist with weight management (which is particularly difficult due to self-reporting of the food consumption, but is possible to approach thanks to modern payment instruments like Mondo\cite{mondo}). Finally, it might be possible to assist with physiotherapy, but that will require identifying not only the exercise class, but to also be able to measure \emph{quality} of the exercise class.
+We are also very excited to use this work as a basis for a Horizon 2020 \cite{horizon2020} project proposal; the aim of the Horizon 2020 project is to help as many people as possible to help become more active, while at the same time preventing injury; to assist with weight management (which is particularly difficult due to self-reporting of the food consumption, but is possible to approach thanks to modern payment instruments like Mondo \cite{mondo}). Finally, it might be possible to assist with physiotherapy, but that will require identifying not only the exercise class, but to also be able to measure \emph{quality} of the exercise class.
 
 Further research will focus on the system's human interaction. Interacting with a screen while exercising greatly reduces the effort the users put in \cite{!!!}; however, listening to music often has the opposite effect \cite{!!!}. Therefore, our future research will explore conversational interfaces delivered through voice synthethiser. 
 
@@ -222,6 +273,7 @@ The focus of our work is on guiding the user during his or her exercise or physi
 \bibitem{horizon2020} European Commission. Horizon 2020. https://ec.europa.eu/programmes/horizon2020/. 28 May 2016.
 
 \bibitem{mondo} Mondo.
+\bibitem{cuda} CUDA.
 \bibitem{morris:2014ir} Morris, D., Saponas, T. S., Guillory, A., \& Kelner, I. (2014). RecoFit (pp. 3225--3234). Presented at the the 32nd annual ACM conference, New York, New York, USA: ACM Press. http://doi.org/10.1145/2556288.2557116
 
 \end{thebibliography}
