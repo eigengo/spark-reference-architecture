@@ -146,6 +146,12 @@ Finally, the mobile application asks the user to confirm the label for the colle
 
 The Akka cluster is a CQRS/ES system, which exposes REST APIs for the mobile application. The REST requests it receives are treated as commands; once a command is validated, the code in the cluster turns it into an \emph{event} and persists it in the journal. Later on, another component may represent the system's state as the sum of all the events in the journal. This \emph{command / query responsibility separation} approach makes it possible to efficiently distribute the processing required by the system's components. (For example, if the users often request a view of the state of the system, then the \emph{query} components receive more resources.) The Akka toolkit uses Actor-based concurrency: within an actor, all computation is synchronous; the toolkit handles asynchronous communication between actors. This allows us to maintain clear boundary on any mutable state: if is kept within an actor, it is safe. 
 
+Internally, there are two main kinds of microservice: one that does not use or need clustering or cluster sharding, and one that does. The example of clustered microservice is the \emph{user profile} microservice; its state is all user profiles, which would not fit in a single node. And so, it needs to be clustered over multiple nodes, with all the complexity of routing the requests to the right actors, cluster rebalancing \& error recovery. The \emph{sensor data} microservice is not clustered: the nodes that comprise it do not need to know about each other; each node is completely stateless, therefore requests arriving at the microservice can be routed to any node. \autoref{fig:ri-akka-actors} shows the two microservices.
+
+\fig{ri-akka-actors.png}{ri-akka-actors}{Akka REST API and actors}
+
+In the Lightbend stack parlance, the \emph{service} is the name for the interface (in this case, the REST API). It processes the HTTP requests, turning them into messages, which are then delivered to the underlying actors. In case of the \emph{sensor data} service, the actor decodes the sensor data payload and persists it in the sesor data database. In case of the \emph{user profile} service---a CQRS/ES microservice---the HTTP request is processed in the same way, turning it into a \emph{command} message. This command is sent to the \emph{user profile processor}, which validates the command and turns it into an \emph{event}. In the CQRS/ES world, we say that an event event is never lost and it will be processed at some point by the \emph{user profile} view. The processor is typically stateless with respect to the commands; the views typically hold state, which is the result of processing all events.
+
 Vivamus urna velit, volutpat ut tincidunt sit amet, pulvinar vitae est. Nam tortor sapien, sagittis non luctus sit amet, porttitor a purus. Donec mattis blandit bibendum. Morbi ipsum lacus, gravida ut nibh semper, porta tincidunt ex. Sed tellus lectus, posuere in facilisis quis, suscipit eu tortor. Maecenas sagittis diam non orci scelerisque, vehicula rutrum ipsum elementum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin bibendum justo gravida sem accumsan consequat. Nunc tristique aliquam magna, id convallis tellus gravida et. Sed orci est, tempus eu ligula sed, posuere feugiat nunc. Sed est mauris, dignissim dignissim pretium in, elementum a neque. Phasellus mollis sollicitudin justo, ut commodo turpis volutpat in. Fusce egestas nunc dui, vel mollis tellus interdum vel. Donec porttitor lorem non mauris porttitor, euismod vestibulum nisi tincidunt. Nunc fringilla risus nulla, id vulputate sem blandit ut. Proin est mauris, viverra in interdum quis, fringilla at augue.
 
 Vivamus urna velit, volutpat ut tincidunt sit amet, pulvinar vitae est. Nam tortor sapien, sagittis non luctus sit amet, porttitor a purus. Donec mattis blandit bibendum. Morbi ipsum lacus, gravida ut nibh semper, porta tincidunt ex. Sed tellus lectus, posuere in facilisis quis, suscipit eu tortor. Maecenas sagittis diam non orci scelerisque, vehicula rutrum ipsum elementum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin bibendum justo gravida sem accumsan consequat. Nunc tristique aliquam magna, id convallis tellus gravida et. Sed orci est, tempus eu ligula sed, posuere feugiat nunc. Sed est mauris, dignissim dignissim pretium in, elementum a neque. Phasellus mollis sollicitudin justo, ut commodo turpis volutpat in. Fusce egestas nunc dui, vel mollis tellus interdum vel. Donec porttitor lorem non mauris porttitor, euismod vestibulum nisi tincidunt. Nunc fringilla risus nulla, id vulputate sem blandit ut. Proin est mauris, viverra in interdum quis, fringilla at augue.
@@ -158,12 +164,9 @@ Vivamus urna velit, volutpat ut tincidunt sit amet, pulvinar vitae est. Nam tort
 
 Vivamus urna velit, volutpat ut tincidunt sit amet, pulvinar vitae est. Nam tortor sapien, sagittis non luctus sit amet, porttitor a purus. Donec mattis blandit bibendum. Morbi ipsum lacus, gravida ut nibh semper, porta tincidunt ex. Sed tellus lectus, posuere in facilisis quis, suscipit eu tortor. Maecenas sagittis diam non orci scelerisque, vehicula rutrum ipsum elementum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin bibendum justo gravida sem accumsan consequat. Nunc tristique aliquam magna, id convallis tellus gravida et. Sed orci est, tempus eu ligula sed, posuere feugiat nunc. Sed est mauris, dignissim dignissim pretium in, elementum a neque. Phasellus mollis sollicitudin justo, ut commodo turpis volutpat in. Fusce egestas nunc dui, vel mollis tellus interdum vel. Donec porttitor lorem non mauris porttitor, euismod vestibulum nisi tincidunt. Nunc fringilla risus nulla, id vulputate sem blandit ut. Proin est mauris, viverra in interdum quis, fringilla at augue.
 
-
 \section{Machine learning}
 
-The ML training and evaluation programs use Python and run in Docker containers. To support fast development cycle, we build two flavours of Docker images: a \emph{light} image that can run on nearly any underlying hardware, and a CUDA \cite{cuda} image that runs on the EC2 \texttt{g2.2xlarge} instance.
-
-Glossing over some important details, its execution is the following loop:
+The ML training and evaluation programs use Python and run in Docker containers. To support fast development cycle, we build two flavours of Docker images: a \emph{light} image that can run on nearly any underlying hardware, and a CUDA \cite{cuda} image that runs on the EC2 \texttt{g2.2xlarge} instance. The latest development work uses Deeplearning4j \cite{dl4j} in order to standardise the infrastructure; the improvements in the underlying numerical library implementation (Nd4j) for both CPUs and GPUs should allow us to move from the Python / Theanu implementation to a JVM-based one. This will simplify our infrastructure, even though the model computation can execute on a single node; the paralelisation is achieved through running multiple nodes. Regardless of the underlying implementation, the machine learning microservice performs the following loop:
 
 \begin{itemize}
 \item Generate new model hyperparameters by appending randomly mutated hyperparameters to the current set of hyperparameters,
@@ -209,6 +212,12 @@ We are also very excited to use this work as a basis for a Horizon 2020 \cite{ho
 
 Further research will focus on the system's human interaction. Interacting with a screen while exercising greatly reduces the effort the users put in \cite{!!!}; however, listening to music often has the opposite effect \cite{!!!}. Therefore, our future research will explore conversational interfaces delivered through voice synthethiser. 
 
+\subsection{Quality of exercise}
+
+One of the approaches we explored for measuring quality of exercise \emph{in laboratory conditions} was to use LDLf \cite{ldlf}, where we use a CNN to identify short-duration events in the stream of fused sensor data; we then run LDLf queries over the stream of events, satisfiable queries produce events about the exercise being performed. However, at the moment of writing, we have only implemented this approach in the Akka cluster; the network latency in delivering the sensor data from the sensors through the mobile application to the Akka cluster, evaluating the stream and sending the results back to the mobile is far too great (in the order of units of seconds) to be usable. \autoref{fig:ri-ldlf-stream} illustrates the processing pipeline we used.
+
+\fig{ri-ldlf-stream.png}{ri-ldlf-stream}{LDLf stream processing}
+
 \section{Summary}
 
 The focus of our work is on guiding the user during his or her exercise or physiotherapy session; to do that, it is necessary to indicate to the user \emph{what to do next} and to recognise that the exercise is actually being performed, and to give feedback about the exercise being performed, as early as possible. In our testing, we found that delays of more than \SI{1}{\second} confuse the users. It was not possible to use the work in \cite{morris:2014ir}; instead, we needed to build our own probabilistic model of next exercise and then eager sensor data recognition layer. It is equally important to accurately collect labelled data, this is achieved through frictionless user interface. The labelled sensor data, the exercise sequences, and the feedback data is written---together with the matching unstable biometric ID and associated profile---to a Apache Cassandra database in normal tabular form. The Apache Spark jobs then identify clusters of biometric IDs based on the information in the profiles, together with (per cluster) the best sequence of exercises and the best sequence of exercise sessions, the top $n$ user-contributed exercises.
@@ -236,10 +245,12 @@ The focus of our work is on guiding the user during his or her exercise or physi
 \bibitem{docker} Docker.
 \bibitem{chronos} Chronos.
 \bibitem{consul} Consul.
+\bibitem{dl4j} DL4J.
 \bibitem{horizon2020} European Commission. Horizon 2020. https://ec.europa.eu/programmes/horizon2020/. 28 May 2016.
 \bibitem{mondo} Mondo.
 \bibitem{cuda} CUDA.
 \bibitem{morris:2014ir} Morris, D., Saponas, T. S., Guillory, A., \& Kelner, I. (2014). RecoFit (pp. 3225--3234). Presented at the the 32nd annual ACM conference, New York, New York, USA: ACM Press. http://doi.org/10.1145/2556288.2557116
+\bibitem{ldlf} LTLf and LDLf Monitoring. Giuseppe De Giacomo, Riccardo De Masellis, Marco Grasso, Fabrizio Maria Maggi and Marco Montali, 2014
 
 \end{thebibliography}
 
