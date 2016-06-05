@@ -98,8 +98,6 @@ The models to predict exercise from sensor data are implemented in a cluster of 
 
 The models' hyper-parameters, parameters and evaluation scores are written back to the database. The Akka cluster then selects the best model (hyper-parameters and parameters) and uses the Apple content delivery network to push it to the users with the matching biometric identifiers. (This enables the Akka cluster to concentrate on its primary task: sensor data ingestion, leaving all other data manipulation and transfer tasks to external services while maintaining frictionless user experience.)
 
-\subsection{Mobile application}
-
 The sensors send the data in \SI{1}{\second} batches; the application on the mobile resamples the sampling rate to \SI{50}\hertz. (Accelerometer and gyroscope typically sample at this rate, heart rate and the strain gauges in smart clothes can be up-sampled to \SI{50}{\hertz} easily.) The mobile application ingests the data from the sensors and, together with a statistical model of the user's short-term behaviour, attempts to identify the movement. The models in the mobile application can make successful predictions of sequence of exercises in a session and the properties of each exercise (i.e. weight, number of repetitions, duration, intensity). The model used to predict sequence of exercise sessions and exercises within a session is a Markov chain \cite{markov-chain-exercise}. This approach allows the application to deal with the reality of exercise in a public gym, where the station for the next suggested exercise might not be available. The Markov chain, together with a bio-mechanical model of the main muscle groups, gives the users the flexibility to achieve their workout targets even in crowded gyms. The sequence of exercise predictions for one particular exercise sessions are illustrated on \autoref{fig:model-sequence}.
 
 \fig{ri-model-sequence.png}{model-sequence}{Exercise sequence model with no context}
@@ -141,6 +139,14 @@ With the fine-grained location data available, the application is \emph{expectin
 \end{table}
 
 Finally, the mobile application asks the user to confirm the label for the collected sensor data. Given the good performance of the exercise recognition (particularly when using fine-grained location services), this is typically just a \emph{confirm} step rather than complex data entry exercise. The mobile application builds a local store of the time regions of labelled sensor data. This store, together with the Markov chain representing the exercise sequence and the final feedback (happy, indifferent, unhappy) is submitted to the server. The server decompresses \& decodes the submitted data and stores it in tabular form in Apache Cassandra, referencing the user's biometric ID. 
+
+\subsection{Mobile application}
+
+Vivamus urna velit, volutpat ut tincidunt sit amet, pulvinar vitae est. Nam tortor sapien, sagittis non luctus sit amet, porttitor a purus. Donec mattis blandit bibendum. Morbi ipsum lacus, gravida ut nibh semper, porta tincidunt ex. Sed tellus lectus, posuere in facilisis quis, suscipit eu tortor. Maecenas sagittis diam non orci scelerisque, vehicula rutrum ipsum elementum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin bibendum justo gravida sem accumsan consequat. Nunc tristique aliquam magna, id convallis tellus gravida et. Sed orci est, tempus eu ligula sed, posuere feugiat nunc. Sed est mauris, dignissim dignissim pretium in, elementum a neque. Phasellus mollis sollicitudin justo, ut commodo turpis volutpat in. Fusce egestas nunc dui, vel mollis tellus interdum vel. Donec porttitor lorem non mauris porttitor, euismod vestibulum nisi tincidunt. Nunc fringilla risus nulla, id vulputate sem blandit ut. Proin est mauris, viverra in interdum quis, fringilla at augue.
+
+Vivamus urna velit, volutpat ut tincidunt sit amet, pulvinar vitae est. Nam tortor sapien, sagittis non luctus sit amet, porttitor a purus. Donec mattis blandit bibendum. Morbi ipsum lacus, gravida ut nibh semper, porta tincidunt ex. Sed tellus lectus, posuere in facilisis quis, suscipit eu tortor. Maecenas sagittis diam non orci scelerisque, vehicula rutrum ipsum elementum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin bibendum justo gravida sem accumsan consequat. Nunc tristique aliquam magna, id convallis tellus gravida et. Sed orci est, tempus eu ligula sed, posuere feugiat nunc. Sed est mauris, dignissim dignissim pretium in, elementum a neque. Phasellus mollis sollicitudin justo, ut commodo turpis volutpat in. Fusce egestas nunc dui, vel mollis tellus interdum vel. Donec porttitor lorem non mauris porttitor, euismod vestibulum nisi tincidunt. Nunc fringilla risus nulla, id vulputate sem blandit ut. Proin est mauris, viverra in interdum quis, fringilla at augue.
+
+Vivamus urna velit, volutpat ut tincidunt sit amet, pulvinar vitae est. Nam tortor sapien, sagittis non luctus sit amet, porttitor a purus. Donec mattis blandit bibendum. Morbi ipsum lacus, gravida ut nibh semper, porta tincidunt ex. Sed tellus lectus, posuere in facilisis quis, suscipit eu tortor. Maecenas sagittis diam non orci scelerisque, vehicula rutrum ipsum elementum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin bibendum justo gravida sem accumsan consequat. Nunc tristique aliquam magna, id convallis tellus gravida et. Sed orci est, tempus eu ligula sed, posuere feugiat nunc. Sed est mauris, dignissim dignissim pretium in, elementum a neque. Phasellus mollis sollicitudin justo, ut commodo turpis volutpat in. Fusce egestas nunc dui, vel mollis tellus interdum vel. Donec porttitor lorem non mauris porttitor, euismod vestibulum nisi tincidunt. Nunc fringilla risus nulla, id vulputate sem blandit ut. Proin est mauris, viverra in interdum quis, fringilla at augue.
 
 \subsection{Server components}
 
@@ -206,15 +212,24 @@ There are many more topics that we could not describe here: rolling upgrades wit
 
 \section{Further research}
 
-We are also very excited to use this work as a basis for a Horizon 2020 \cite{horizon2020} project proposal; the aim of the Horizon 2020 project is to help as many people as possible to help become more active, while at the same time preventing injury; to assist with weight management (which is particularly difficult due to self-reporting of the food consumption, but is possible to approach thanks to modern payment instruments like Mondo \cite{mondo}). Finally, it might be possible to assist with physiotherapy, but that will require identifying not only the exercise class, but to also be able to measure \emph{quality} of the exercise class.
+The current system is a great starting point for future work. We are actively pursuing three avenues; we will publish our results as soon as we are ready.
 
-Further research will focus on the system's human interaction. Interacting with a screen while exercising greatly reduces the effort the users put in \cite{!!!}; however, listening to music often has the opposite effect \cite{!!!}. Therefore, our future research will explore conversational interfaces delivered through voice synthethiser. 
+\subsection{Removing self-reporting from activity and food tracking}
+
+We are also very excited to use this work as a basis for a Horizon 2020 \cite{horizon2020} project proposal; the aim of the Horizon 2020 project is to help as many people as possible to help become more active, while at the same time preventing injury; to assist with weight management (which is particularly difficult due to self-reporting of the food consumption, but is possible to approach thanks to modern payment instruments like Mondo \cite{mondo}).
 
 \subsection{Quality of exercise}
 
 One of the approaches we explored for measuring quality of exercise \emph{in laboratory conditions} was to use LDLf \cite{ldlf}, where we use a CNN to identify short-duration events in the stream of fused sensor data; we then run LDLf queries over the stream of events, satisfiable queries produce events about the exercise being performed. However, at the moment of writing, we have only implemented this approach in the Akka cluster; the network latency in delivering the sensor data from the sensors through the mobile application to the Akka cluster, evaluating the stream and sending the results back to the mobile is far too great (in the order of units of seconds) to be usable. \autoref{fig:ri-ldlf-stream} illustrates the processing pipeline we used.
 
 \fig{ri-ldlf-stream.png}{ri-ldlf-stream}{LDLf stream processing}
+
+The input from the sensors (\emph{SensorNet}) is split into windows (\emph{SensorNetValue}); the sensor data in the windows is classified using CNNs similar to the one use in the current implementation of the mobile application (\emph{BindToSensors}). The \emph{BindToSensors} and the LDLf formul\ae\ then evaluate the stream of events, and together with a state machine which represents particular exercises or exercise regimes, the system can identify sequences of inputs from sensors, which together not only identify, but also express \emph{quality} of exercise being performed. Unfortunately, we were not yet able to implement user-friendly learning mechanism; the classifiers and formul\ae\ are currently hand-crafted. This proves the implementation in principle, but leaves a lot of work for the final product.
+
+\subsection{Innovative UX}
+
+Further research will focus on the system's human interaction. Interacting with a screen while exercising greatly reduces the effort the users put in \cite{!!!}; however, listening to music often has the opposite effect \cite{!!!}. Therefore, our future research will explore conversational interfaces delivered through voice synthethiser. 
+
 
 \section{Summary}
 
