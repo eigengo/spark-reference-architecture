@@ -158,7 +158,7 @@ Internally, there are two main kinds of microservice: one that does not use or n
 
 In the Lightbend stack parlance, the \emph{service} is the name for the interface (in this case, the REST API). It processes the HTTP requests, turning them into messages, which are then delivered to the underlying actors. In case of the \emph{sensor data} service, the actor decodes the sensor data payload and persists it in the sesor data database. In case of the \emph{user profile} service---a CQRS/ES microservice---the HTTP request is processed in the same way, turning it into a \emph{command} message. This command is sent to the \emph{user profile processor}, which validates the command and turns it into an \emph{event}. In the CQRS/ES world, we say that an event event is never lost and it will be processed at some point by the \emph{user profile} view. The processor is typically stateless with respect to the commands; the views typically hold state, which is the result of processing all events.
 
-The separation of command and query processing code allows the system to scale selectively: profile views are more frequent than views; the combination of supervision in Akka and persistence in actors allows the system to scale up and down, and to handle errors gracefully.\footnote{There are many topics that we have not covered, especially around message delivery semantics in distributed systems}.
+The separation of command and query processing code allows the system to scale selectively: profile views are more frequent than views; the combination of supervision in Akka and persistence in actors allows the system to scale up and down, and to handle errors gracefully.\footnote{There are many topics that we have not covered, especially around message delivery semantics in distributed systems.}
 
 \subsection{Apache Spark batch analytics}
 
@@ -216,7 +216,7 @@ The current system is a great starting point for future work. We are actively pu
 
 \subsection{Removing self-reporting from activity and food tracking}
 
-We are also very excited to use this work as a basis for a Horizon 2020 \cite{horizon2020} project proposal; the aim of the Horizon 2020 project is to help as many people as possible to help become more active, while at the same time preventing injury; to assist with weight management (which is particularly difficult due to self-reporting of the food consumption, but is possible to approach thanks to modern payment instruments like Mondo \cite{mondo}).
+We are also very excited to use this work as a basis for a Horizon 2020 \cite{horizon2020} project proposal; the aim of the Horizon 2020 project is to help as many people as possible to help become more active, while at the same time preventing injury and to assist with weight management. The problems with most weight management programmes center around self-reporting, where the users (sometimes grossly) over-estimate the amount and intensity of exercise performed and (sometimes grossly) under-estimate the amount of food consumed. \cite{!!!}. We can tackle the exercise over-reporting using this system. Understanding what users eat is much more difficult; one of the avenues we are exploring is tracking the amount of food \emph{purchased}. We understand that this is not equal to the amount of food consumed, but we believe we can draw sensible correlations, particularly when comparing large volumes of users, their exercise habits and the details of purchased food. (We are using Mondo \cite{mondo} for food purchase tracking PoC.)
 
 \subsection{Quality of exercise}
 
